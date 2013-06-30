@@ -5,9 +5,9 @@ So You Wanna Build a Crowdfunding Site
 
 **Today, I want to show you how to build your very own crowdfunding site, *in less than 300 lines of code*.**
 
-### Here's [The Live Demo]().
+### Here's [The Live Demo](https://crowdtuts-1.herokuapp.com/).
 
-This tutorial was written by [Nick Case](http://ncase.me) for [The Mozilla Hacks Blog]().
+This tutorial was written by [Nick Case](http://ncase.me) for [The Mozilla Hacks Blog](https://hacks.mozilla.org/).
 
 If you like this tutorial, [please help fund future episodes]() for this *Build a Crowdfunding Site* series!
 
