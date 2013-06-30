@@ -1,7 +1,7 @@
 So You Wanna Build a Crowdfunding Site
 ===
 
-![Splash Image](http://placekitten.com/800/300)
+![Splash Image](tutorial/img/banner.png)
 
 **Today, I want to show you how to build your very own crowdfunding site, *in less than 300 lines of code*.**
 
