@@ -1,0 +1,65 @@
+<link rel='stylesheet' type='text/css' href='/static/fancy.css'>
+<h1>Donation Page:</h1>
+
+<!-- Remember to replace BALANCED_MARKETPLACE_URI with your actual Marketplace URI! -->
+<script src="https://js.balancedpayments.com/v1/balanced.js"></script>
+<script>
+    var BALANCED_MARKETPLACE_URI = "/v1/marketplaces/TEST-YourMarketplaceURI";
+    balanced.init(BALANCED_MARKETPLACE_URI);
+</script>
+
+<form id="payment_form" action="/pay/balanced" method="POST">
+
+    Name: <input name="name" value="Pinkie Pie"/> <br>
+    Amount: <input name="amount" value="12.34"/> <br>
+    Card Number: <input name="card_number" value="4111 1111 1111 1111"/> <br>
+    Expiration Month: <input name="expiration_month" value="4"/> <br>
+    Expiration Year: <input name="expiration_year" value="2050"/> <br>
+    Security Code: <input name="security_code" value="123"/> <br>
+
+    <!-- Hidden inputs -->
+    <input type="hidden" name="card_uri"/>
+
+</form>
+<button onclick="charge();">
+    Pay with Credit Card
+</button>
+
+<script>
+
+// Get card data from form.
+function getCardData(){
+    // Actual form data
+    var form = document.getElementById("payment_form");
+    return {
+        "name": form.name.value,
+        "card_number": form.card_number.value,
+        "expiration_month": form.expiration_month.value,
+        "expiration_year": form.expiration_year.value,
+        "security_code": form.security_code.value
+    };
+}
+
+// Charge credit card
+function charge(){
+
+    // Securely tokenize card data using Balanced
+    var cardData = getCardData();
+    balanced.card.create(cardData, function(response) {
+
+        // Handle Errors (Anything that's not Success Code 201)
+        if(response.status!=201){
+            alert(response.error.description);
+            return;
+        }
+
+        // Submit form with Card URI
+        var form = document.getElementById("payment_form");
+        form.card_uri.value = response.data.uri;
+        form.submit();
+
+    });
+
+};
+
+</script>

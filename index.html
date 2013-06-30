@@ -1,0 +1,431 @@
+<link rel="stylesheet" type="text/css" href="tutorial/style/tutorial.css">
+<h1>So You Wanna Build a Crowdfunding Site</h1>
+<p><img src="http://placekitten.com/800/300" alt="Splash Image"></p>
+<p><strong>Today, I want to show you how to build your very own crowdfunding site, <em>in less than 300 lines of code</em>.</strong></p>
+<h3>Here&#39;s <a href="">The Live Demo</a>.</h3>
+<p>This tutorial was written by <a href="http://ncase.me">Nick Case</a> for <a href="">The Mozilla Hacks Blog</a>.</p>
+<p>If you like this tutorial, <a href="">please help fund future episodes</a> for this <em>Build a Crowdfunding Site</em> series!</p>
+<p>Everything here is <a href="http://unlicense.org/">Unlicensed</a>.</p>
+<h2>0. Quick Start</h2>
+<p>If you just want the final crowdfunding site, clone this repo and go to the <code>/demo</code> folder.
+All you need to do is set your configuration variables, and you&#39;re ready to go!
+For everyone who wants the nitty gritty details, carry on.</p>
+<h2>1. Setting up a basic Node.js app with Express</h2>
+<p>If you haven&#39;t already done so, you&#39;ll need to <a href="http://nodejs.org/">install Node.js</a>. (duh)</p>
+<p>Create a new folder for your app.
+We&#39;ll be using the <a href="http://expressjs.com/">Express.js framework</a> to make things a lot more pleasant.
+To install the Express node module, run this on the command line inside your app&#39;s folder:</p>
+<pre><code>npm install express</code></pre>
+<p>Next, create a file called <code>app.js</code>, which will be your main server logic.
+The following code will initialize a simple Express app,
+which just serves a basic homepage and funding page for your crowdfunding site.</p>
+<pre><code>// Configuration
+var CAMPAIGN_GOAL = 1000; // Your fundraising goal, in dollars
+
+// Initialize an Express app
+var express = require(&#39;express&#39;);
+var app = express();
+app.use(&quot;/static&quot;, express.static(__dirname + &#39;/static&#39;)); // Serve static files
+app.use(express.bodyParser()); // Can parse POST requests
+app.listen(1337); // The best port
+console.log(&quot;App running on http://localhost:1337&quot;);
+
+// Serve homepage
+app.get(&quot;/&quot;,function(request,response){
+
+    // TODO: Actually get fundraising total
+    response.send(
+        &quot;&lt;link rel=&#39;stylesheet&#39; type=&#39;text/css&#39; href=&#39;/static/fancy.css&#39;&gt;&quot;+
+        &quot;&lt;h1&gt;Your Crowdfunding Campaign&lt;/h1&gt;&quot;+
+        &quot;&lt;h2&gt;raised ??? out of $&quot;+CAMPAIGN_GOAL.toFixed(2)+&quot;&lt;/h2&gt;&quot;+
+        &quot;&lt;a href=&#39;/fund&#39;&gt;Fund This&lt;/a&gt;&quot;
+    );
+
+});
+
+// Serve funding page
+app.get(&quot;/fund&quot;,function(request,response){
+    response.sendfile(&quot;fund.html&quot;);
+});</code></pre>
+<p>Create another file named <code>fund.html</code>. This will be your funding page.</p>
+<pre><code>&lt;link rel=&#39;stylesheet&#39; type=&#39;text/css&#39; href=&#39;/static/fancy.css&#39;&gt;
+&lt;h1&gt;Donation Page:&lt;/h1&gt;</code></pre>
+<p>Optionally, you may also include a stylesheet at <code>/static/fancy.css</code>,
+so that your site doesn&#39;t look Hella Nasty for the rest of this tutorial.</p>
+<pre><code>@import url(http://fonts.googleapis.com/css?family=Raleway:200);
+body {
+    margin: 100px;
+    font-family: Raleway; /* Sexy font */
+    font-weight: 200;
+}</code></pre>
+<p>Finally, run <code>node app</code> on the command line to start your server!</p>
+<p>Check out your crowdfunding site so far at <code>http://localhost:1337</code>.</p>
+<p><img src="tutorial/img/homepage1.png" alt="Crowdfunding Homepage 1"></p>
+<p>The homepage will display the Campaign Goal you set in the Configuration section of <code>app.js</code>.
+The donations page isn&#39;t functional yet, so in the following chapters,
+I&#39;ll show you how to accept and aggregate credit card payments from your wonderful backers.</p>
+<h2>2. Getting started with Balanced Payments</h2>
+<p><a href="https://www.balancedpayments.com/">Balanced Payments</a> isn&#39;t just another payments processor.
+They&#39;ve open sourced their whole site, their chat logs are publicly available, and they even discuss their roadmap in the open.
+<a href="http://www.fastcolabs.com/3008944/open-company/why-i-made-my-payments-startup-an-open-company">These people <em>get</em> openness.</a></p>
+<p>Best of all, you don&#39;t even need to sign up to get started with Balanced!</p>
+<p><a href="https://www.balancedpayments.com/marketplaces/start">Just go to this link</a>,
+and they&#39;ll generate a brand-new Test Marketplace for you,
+that you can claim with an account afterwards.
+Remember to keep this tab open, or save the URL, so you can come back to your Test Marketplace later.</p>
+<p><img src="tutorial/img/balanced1.png" alt="Balanced Test Marketplace"></p>
+<p>Click the Settings tab in the sidebar, and note your Marketplace URI and API Key Secret.</p>
+<p><img src="tutorial/img/balanced2.png" alt="Balanced Settings"></p>
+<p>Copy these variables to the Configuration section of <code>app.js</code> like this:</p>
+<pre><code>// Configuration
+var BALANCED_MARKETPLACE_URI = &quot;/v1/marketplaces/TEST-YourMarketplaceURI&quot;;
+var BALANCED_API_KEY = &quot;YourAPIKey&quot;;
+var CAMPAIGN_GOAL = 1000; // Your fundraising goal, in dollars</code></pre>
+<p>Now, let&#39;s switch back to <code>fund.html</code> to create our actual payment page.</p>
+<p>First, we&#39;ll include and initialize <a href="https://docs.balancedpayments.com/current/overview?language=bash#tokenizing-sensitive-information">Balanced.js</a>.
+This Javascript library will securely tokenize the user&#39;s credit card info, so your server never has to handle the info directly.
+Meaning, you will be free from PCI regulations.
+Append the following code to <code>fund.html</code>:</p>
+<pre><code>&lt;!-- Remember to replace BALANCED_MARKETPLACE_URI with your actual Marketplace URI! --&gt;
+&lt;script src=&quot;https://js.balancedpayments.com/v1/balanced.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+    var BALANCED_MARKETPLACE_URI = &quot;/v1/marketplaces/TEST-YourMarketplaceURI&quot;;
+    balanced.init(BALANCED_MARKETPLACE_URI);
+&lt;/script&gt;</code></pre>
+<p>Next, create the form itself, asking for the user&#39;s Name, the Amount they want to donate, and other credit card info.
+We will also add a hidden input, for the credit card token that Balanced.js will give us.
+The form below comes with default values for a test Visa credit card.
+Append this to <code>fund.html</code>:</p>
+<pre><code>&lt;form id=&quot;payment_form&quot; action=&quot;/pay/balanced&quot; method=&quot;POST&quot;&gt;
+
+    Name: &lt;input name=&quot;name&quot; value=&quot;Pinkie Pie&quot;/&gt; &lt;br&gt;
+    Amount: &lt;input name=&quot;amount&quot; value=&quot;12.34&quot;/&gt; &lt;br&gt;
+    Card Number: &lt;input name=&quot;card_number&quot; value=&quot;4111 1111 1111 1111&quot;/&gt; &lt;br&gt;
+    Expiration Month: &lt;input name=&quot;expiration_month&quot; value=&quot;4&quot;/&gt; &lt;br&gt;
+    Expiration Year: &lt;input name=&quot;expiration_year&quot; value=&quot;2050&quot;/&gt; &lt;br&gt;
+    Security Code: &lt;input name=&quot;security_code&quot; value=&quot;123&quot;/&gt; &lt;br&gt;
+
+    &lt;!-- Hidden inputs --&gt;
+    &lt;input type=&quot;hidden&quot; name=&quot;card_uri&quot;/&gt;
+
+&lt;/form&gt;
+&lt;button onclick=&quot;charge();&quot;&gt;
+    Pay with Credit Card
+&lt;/button&gt;</code></pre>
+<p>Notice the Pay button does not submit the form directly,
+but calls a <code>charge()</code> function instead, which we are going to implement next.
+The <code>charge()</code> function will get the credit card token from Balanced.js, 
+add it as a hidden input, and submit the form.
+Append this to <code>fund.html</code>:</p>
+<pre><code>&lt;script&gt;
+
+// Get card data from form.
+function getCardData(){
+    // Actual form data
+    var form = document.getElementById(&quot;payment_form&quot;);
+    return {
+        &quot;name&quot;: form.name.value,
+        &quot;card_number&quot;: form.card_number.value,
+        &quot;expiration_month&quot;: form.expiration_month.value,
+        &quot;expiration_year&quot;: form.expiration_year.value,
+        &quot;security_code&quot;: form.security_code.value
+    };
+}
+
+// Charge credit card
+function charge(){
+
+    // Securely tokenize card data using Balanced
+    var cardData = getCardData();
+    balanced.card.create(cardData, function(response) {
+
+        // Handle Errors (Anything that&#39;s not Success Code 201)
+        if(response.status!=201){
+            alert(response.error.description);
+            return;
+        }
+
+        // Submit form with Card URI
+        var form = document.getElementById(&quot;payment_form&quot;);
+        form.card_uri.value = response.data.uri;
+        form.submit();
+
+    });
+
+};
+
+&lt;/script&gt;</code></pre>
+<p>This form will send a POST request to <code>/pay/balanced</code>, which we will handle in <code>app.js</code>.
+For now, we just want to display the card token URI.
+Paste the following code at the end of <code>app.js</code>:</p>
+<pre><code>// Pay via Balanced
+app.post(&quot;/pay/balanced&quot;,function(request,response){
+
+    // Payment Data
+    var card_uri = request.body.card_uri;
+    var amount = request.body.amount;
+    var name = request.body.name;
+
+    // Placeholder
+    response.send(&quot;Your card URI is: &quot;+request.body.card_uri);
+
+});</code></pre>
+<p>Restart your app, (Ctrl-C to exit, then <code>node app</code> to start again) and go back to <code>http://localhost:1337</code>.</p>
+<p>Your payment form should now look like this:</p>
+<p><img src="tutorial/img/funding1.png" alt="Funding Form 1"></p>
+<p>The default values for the form will already work, so just go ahead and click Pay With Credit Card.
+(Make sure you&#39;ve replaced <code>BALANCED_MARKETPLACE_URI</code> in <code>fund.html</code> with your actual Test Marketplace&#39;s URI!)
+Your server will happily respond with the generated Card URI Token.</p>
+<p><img src="tutorial/img/funding2.png" alt="Funding Form 2"></p>
+<p>Next up, we will use this token to actually charge the given credit card!</p>
+<h2>3. Charging cards through Balanced Payments</h2>
+<p>Before we charge right into this, (haha) let&#39;s install two more Node.js modules for convenience.</p>
+<p>Run the following in the command line:</p>
+<p><code>npm install request</code> A library for simplified HTTP requests.</p>
+<p><code>npm install q</code> A <a href="http://howtonode.org/promises">Promises</a> library, to pleasantly handle asynchronous calls and avoid Callback Hell.</p>
+<p>Because we&#39;ll be making multiple calls to Balanced, let&#39;s also create a helper method.
+The following function returns a Promise that the Balanced API has responded to whatever HTTP Request we just sent it.
+Append this code to <code>app.js</code>:</p>
+<pre><code>// Calling the Balanced REST API
+var Q = require(&#39;q&#39;);
+var httpRequest = require(&#39;request&#39;);
+function _callBalanced(url,params){
+
+    // Promise an HTTP POST Request
+    var deferred = Q.defer();
+    httpRequest.post({
+
+        url: &quot;https://api.balancedpayments.com&quot;+BALANCED_MARKETPLACE_URI+url,
+        auth: {
+            user: BALANCED_API_KEY,
+            pass: &quot;&quot;,
+            sendImmediately: true
+        },
+        json: params
+
+    }, function(error,response,body){
+
+        // Handle all Bad Requests (Error 4XX) or Internal Server Errors (Error 5XX)
+        if(body.status_code&gt;=400){
+            deferred.reject(body.description);
+            return;
+        }
+
+        // Successful Requests
+        deferred.resolve(body);
+
+    });
+    return deferred.promise;
+
+}</code></pre>
+<p>Now, instead of just showing us the Card Token URI when we submit the donation form, we want to:</p>
+<ol>
+<li>Create an account with the Card URI</li>
+<li>Charge said account for the given amount (note: you&#39;ll have to convert to cents for the Balanced API)</li>
+<li>Record the transaction in the database (note: we&#39;re skipping this for now, and covering it in the next chapter)</li>
+<li>Render a personalized message from the transaction</li>
+</ol>
+<p>Replace the <code>app.post(&quot;/pay/balanced&quot;, ... );</code> callback from the previous chapter with this:</p>
+<pre><code>// Pay via Balanced
+app.post(&quot;/pay/balanced&quot;,function(request,response){
+
+    // Payment Data
+    var card_uri = request.body.card_uri;
+    var amount = request.body.amount;
+    var name = request.body.name;
+
+    // TODO: Charge card using Balanced API
+    /*response.send(&quot;Your card URI is: &quot;+request.body.card_uri);*/
+
+    Q.fcall(function(){
+
+        // Create an account with the Card URI
+        return _callBalanced(&quot;/accounts&quot;,{
+            card_uri: card_uri
+        });
+
+    }).then(function(account){
+
+        // Charge said account for the given amount
+        return _callBalanced(&quot;/debits&quot;,{
+            account_uri: account.uri,
+            amount: Math.round(amount*100) // Convert from dollars to cents, as integer
+        });
+
+    }).then(function(transaction){
+
+        // Donation data
+        var donation = {
+            name: name,
+            amount: transaction.amount/100, // Convert back from cents to dollars.
+            transaction: transaction
+        };
+
+        // TODO: Actually record the transaction in the database
+        return Q.fcall(function(){
+            return donation;
+        });
+
+    }).then(function(donation){
+
+        // Personalized Thank You Page
+        response.send(
+            &quot;&lt;link rel=&#39;stylesheet&#39; type=&#39;text/css&#39; href=&#39;/static/fancy.css&#39;&gt;&quot;+
+            &quot;&lt;h1&gt;Thank you, &quot;+donation.name+&quot;!&lt;/h1&gt; &lt;br&gt;&quot;+
+            &quot;&lt;h2&gt;You donated $&quot;+donation.amount.toFixed(2)+&quot;.&lt;/h2&gt; &lt;br&gt;&quot;+
+            &quot;&lt;a href=&#39;/&#39;&gt;Return to Campaign Page&lt;/a&gt; &lt;br&gt;&quot;+
+            &quot;&lt;br&gt;&quot;+
+            &quot;Here&#39;s your full Donation Info: &lt;br&gt;&quot;+
+            &quot;&lt;pre&gt;&quot;+JSON.stringify(donation,null,4)+&quot;&lt;/pre&gt;&quot;
+        );
+
+    },function(err){
+        response.send(&quot;Error: &quot;+err);
+    });
+
+});</code></pre>
+<p>Now restart your app, and pay through the Donation Page once again.
+(Note: To cover processing fees, you have to pay more than $0.50 USD)
+This time, you&#39;ll get a full Payment Complete page, with personalized information!</p>
+<p><img src="tutorial/img/transaction1.png" alt="Transaction 1"></p>
+<p>Furthermore, if you check the transactions tab in your Test Marketplace dashboard,
+you should find that money has now been added to your balance.</p>
+<p><img src="tutorial/img/transaction2.png" alt="Transaction 2"></p>
+<p>We&#39;re getting close! Next, let&#39;s record donations in a MongoDB database.</p>
+<h2>4. Recording donations with MongoDB</h2>
+<p><a href="http://mongodb.org">MongoDB</a> is a popular open-source <a href="http://www.10gen.com/nosql">NoSQL</a> database.
+NoSQL is especially handy for rapid prototyping, because of its dynamic schemas.
+In other words, you can just make stuff up on the fly.
+This will be useful if, in the future, you want to record extra details about each donation,
+such as the donator&#39;s email address, reward levels, favorite color, etc.</p>
+<p>Start up a MongoDB database, and get its URI. 
+You can use a remote database with a service such as <a href="https://www.mongohq.com/home">MongoHQ</a>,
+but for this tutorial, let&#39;s run MongoDB locally.
+<a href="http://docs.mongodb.org/manual/installation/">Here are the instructions for installing and running MongoDB on your computer</a>.</p>
+<p>Once you&#39;ve done that, add the MongoDB URI to your Configuration section at the top of <code>app.js</code>.</p>
+<pre><code>// Configuration
+var MONGO_URI = &quot;mongodb://localhost:27017/test&quot;;
+var BALANCED_MARKETPLACE_URI = &quot;/v1/marketplaces/TEST-YourMarketplaceURI&quot;;
+var BALANCED_API_KEY = &quot;YourAPIKey&quot;;
+var CAMPAIGN_GOAL = 1000; // Your fundraising goal, in dollars</code></pre>
+<p>Now, let&#39;s install the native MongoDB driver for Node.js:</p>
+<p><code>npm install mongodb</code></p>
+<p>Add the following code to the end of <code>app.js</code>.
+This will return a Promise that we&#39;ve recorded a donation in MongoDB.</p>
+<pre><code>// Recording a Donation
+var mongo = require(&#39;mongodb&#39;).MongoClient;
+function _recordDonation(donation){
+
+    // Promise saving to database
+    var deferred = Q.defer();
+    mongo.connect(MONGO_URI,function(err,db){
+        if(err){ return deferred.reject(err); }
+
+        // Insert donation
+        db.collection(&#39;donations&#39;).insert(donation,function(err){
+            if(err){ return deferred.reject(err); }
+
+            // Promise the donation you just saved
+            deferred.resolve(donation);
+
+            // Close database
+            db.close();
+
+        });
+    });
+    return deferred.promise;
+
+}</code></pre>
+<p>Previously, we skipped over actually recording a donation to a database.
+Go back, and replace that section of code with this:</p>
+<pre><code>// TODO: Actually log the donation with MongoDB
+/*return Q.fcall(function(){
+    return donation;
+});*/
+
+// Record donation to database
+return _recordDonation(donation);</code></pre>
+<p>Restart your app, and make another donation.
+If you run <code>db.donations.find()</code> on your MongoDB instance, you&#39;ll find the donation you just logged!</p>
+<p><img src="tutorial/img/transaction3.png" alt="Transaction 3"></p>
+<p><em>Just one step left...</em></p>
+<p>Finally, we will use these recorded donations to calculate how much money we&#39;ve raised.</p>
+<h2>5. Completing the Donation</h2>
+<p>Whether it&#39;s showing progress or showing off,
+you&#39;ll want to tell potential backers how much your campaign&#39;s already raised.</p>
+<p>To get the total amount donated, simply query for all donation amounts from MongoDB, and add them up.
+Here&#39;s how you do that with MongoDB, with an asynchronous Promise for it.
+Append this code to <code>app.js</code>:</p>
+<pre><code>// Get total donation funds
+function _getTotalFunds(){
+
+    // Promise the result from database
+    var deferred = Q.defer();
+    mongo.connect(MONGO_URI,function(err,db){
+        if(err){ return deferred.reject(err); }
+
+        // Get amounts of all donations
+        db.collection(&#39;donations&#39;)
+        .find( {}, {amount:1} ) // Select all, only return &quot;amount&quot; field
+        .toArray(function(err,donations){
+            if(err){ return deferred.reject(err); }
+
+            // Sum up total amount, and resolve promise.
+            var total = donations.reduce(function(previousValue,currentValue){
+                return previousValue + currentValue.amount;
+            },0);
+            deferred.resolve(total);
+
+            // Close database
+            db.close();
+
+        });
+    });
+    return deferred.promise;
+
+}</code></pre>
+<p>Now, let&#39;s go back to where we were serving a basic homepage.
+Let&#39;s change that, to <em>actually</em> calculate your total funds, and show the world how far along your campaign has gotten.</p>
+<pre><code>// Serve homepage
+app.get(&quot;/&quot;,function(request,response){
+
+    // TODO: Actually get fundraising total
+    /*response.send(
+        &quot;&lt;link rel=&#39;stylesheet&#39; type=&#39;text/css&#39; href=&#39;/static/fancy.css&#39;&gt;&quot;+
+        &quot;&lt;h1&gt;Your Crowdfunding Campaign&lt;/h1&gt;&quot;+
+        &quot;&lt;h2&gt;raised ??? out of $&quot;+CAMPAIGN_GOAL.toFixed(2)+&quot;&lt;/h2&gt;&quot;+
+        &quot;&lt;a href=&#39;/fund&#39;&gt;Fund This&lt;/a&gt;&quot;
+    );*/
+
+    Q.fcall(_getTotalFunds).then(function(total){
+        response.send(
+            &quot;&lt;link rel=&#39;stylesheet&#39; type=&#39;text/css&#39; href=&#39;/static/fancy.css&#39;&gt;&quot;+
+            &quot;&lt;h1&gt;Your Crowdfunding Campaign&lt;/h1&gt;&quot;+
+            &quot;&lt;h2&gt;raised $&quot;+total.toFixed(2)+&quot; out of $&quot;+CAMPAIGN_GOAL.toFixed(2)+&quot;&lt;/h2&gt;&quot;+
+            &quot;&lt;a href=&#39;/fund&#39;&gt;Fund This&lt;/a&gt;&quot;
+        );
+    });
+
+});</code></pre>
+<p>Restart the app, and look at your final homepage.</p>
+<p><img src="tutorial/img/homepage2.png" alt="Crowdfunding Homepage 2"></p>
+<p><em>It&#39;s... beautiful.</em></p>
+<p>You&#39;ll see that your total already includes the donations recorded from the previous chapter.
+Make another payment through the Donations Page, and watch your funding total go up.</p>
+<p>Congratulations, you just made your very own crowdfunding site!</p>
+<h2>FUNDING FUTURE TUTORIAL EPISODES</h2>
+<p>This, of course, is just the beginning.</p>
+<p>Crowdfunding, by its very nature, spreads the power amongst the people.
+That&#39;s why it&#39;s sad that Kickstarter is treated like a pre-order platform,
+and there&#39;s no innovation in crowdfunding beyond &quot;reach this goal by this time&quot;.
+We need to further explore this space, and with your help,
+I&#39;d love to expand on this <em>Build a Crowdfunding Site</em> series.</p>
+<h3><strong><a href="">Help Fund Future Episodes!</a></strong></h3>
+<p>Each episode will have an in-depth tutorial with live demo,
+all <em>dedicated to the public domain</em> with the <a href="http://unlicense.org/">Unlicense</a> License.
+For every $100 donated, I will write and publish one new episode.
+All backers will get to be a part of the writing process, and be credited in each tutorial.
+At the end, I&#39;ll compile everything into a copyright-free ebook, for the world to read!</p>
+<p>And hey, who knows?</p>
+<p>Maybe this could be a new way to fund, create, and publish something, <em>all in the open</em>.</p>
+

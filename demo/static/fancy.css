@@ -1,0 +1,6 @@
+@import url(http://fonts.googleapis.com/css?family=Raleway:200);
+body {
+    margin: 100px;
+    font-family: Raleway; /* Sexy font */
+    font-weight: 200;
+}
