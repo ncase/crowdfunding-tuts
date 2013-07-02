@@ -52,7 +52,7 @@ app.get(&quot;/fund&quot;,function(request,response){
 &lt;h1&gt;Donation Page:&lt;/h1&gt;</code></pre>
 <p>Optionally, you may also include a stylesheet at <code>/static/fancy.css</code>,
 so that your site doesn&#39;t look Hella Nasty for the rest of this tutorial.</p>
-<pre><code>@import url(http://fonts.googleapis.com/css?family=Raleway:200);
+<pre><code>@import url(https://fonts.googleapis.com/css?family=Raleway:200);
 body {
     margin: 100px;
     font-family: Raleway; /* Sexy font */
@@ -85,7 +85,7 @@ var CAMPAIGN_GOAL = 1000; // Your fundraising goal, in dollars</code></pre>
 <p>First, we&#39;ll include and initialize <a href="https://docs.balancedpayments.com/current/overview?language=bash#tokenizing-sensitive-information">Balanced.js</a>.
 This Javascript library will securely tokenize the user&#39;s credit card info, so your server never has to handle the info directly.
 Meaning, you will be free from PCI regulations.
-Append the following code to <code>fund.html</code>:</p>
+Append the following code to <code>fund.html</code>, replacing <code>BALANCED_MARKETPLACE_URI</code> with your actual Marketplace URI:</p>
 <pre><code>&lt;!-- Remember to replace BALANCED_MARKETPLACE_URI with your actual Marketplace URI! --&gt;
 &lt;script src=&quot;https://js.balancedpayments.com/v1/balanced.js&quot;&gt;&lt;/script&gt;
 &lt;script&gt;

@@ -74,7 +74,7 @@ Create another file named `fund.html`. This will be your funding page.
 Optionally, you may also include a stylesheet at `/static/fancy.css`,
 so that your site doesn't look Hella Nasty for the rest of this tutorial.
 
-	@import url(http://fonts.googleapis.com/css?family=Raleway:200);
+	@import url(https://fonts.googleapis.com/css?family=Raleway:200);
 	body {
 		margin: 100px;
 		font-family: Raleway; /* Sexy font */
@@ -126,7 +126,7 @@ Now, let's switch back to `fund.html` to create our actual payment page.
 First, we'll include and initialize [Balanced.js](https://docs.balancedpayments.com/current/overview?language=bash#tokenizing-sensitive-information).
 This Javascript library will securely tokenize the user's credit card info, so your server never has to handle the info directly.
 Meaning, you will be free from PCI regulations.
-Append the following code to `fund.html`:
+Append the following code to `fund.html`, replacing `BALANCED_MARKETPLACE_URI` with your actual Marketplace URI:
 
 	<!-- Remember to replace BALANCED_MARKETPLACE_URI with your actual Marketplace URI! -->
 	<script src="https://js.balancedpayments.com/v1/balanced.js"></script>
