@@ -3,15 +3,14 @@ So You Wanna Build a Crowdfunding Site
 
 ![Splash Image](tutorial/img/banner.png)
 
-**Today, I want to show you how to build your very own crowdfunding site, *in less than 300 lines of code*.**
+**The tools to get funded by the crowd, should belong to the crowd.**
 
-### Here's [The Live Demo](https://crowdtuts-1.herokuapp.com/).
+That's why I want to show you how to roll your own crowdfunding site, <i>in less than 300 lines of code</i>. 
+Everything in this tutorial is open source, and we'll only use other open-source technologies,
+such as Node.js, MongoDB, and Balanced Payments.
 
-This tutorial was written by [Nick Case](http://ncase.me) for [The Mozilla Hacks Blog](https://hacks.mozilla.org/).
-
-If you like this tutorial, [please help fund future episodes]() for this *Build a Crowdfunding Site* series!
-
-Everything here is [Unlicensed](http://unlicense.org/).
+**Here's the [Live Demo](https://crowdtuts-1.herokuapp.com/).**
+All source code and tutorial text is [Unlicensed](http://unlicense.org/).
 
 
 0. Quick Start
@@ -517,29 +516,3 @@ You'll see that your total already includes the donations recorded from the prev
 Make another payment through the Donations Page, and watch your funding total go up.
 
 Congratulations, you just made your very own crowdfunding site!
-
-
-
-FUNDING FUTURE TUTORIAL EPISODES
----
-
-This, of course, is just the beginning.
-
-Crowdfunding, by its very nature, spreads the power amongst the people.
-That's why it's sad that Kickstarter is treated like a pre-order platform,
-and there's no innovation in crowdfunding beyond "reach this goal by this time".
-We need to further explore this space, and with your help,
-I'd love to expand on this *Build a Crowdfunding Site* series.
-
-###**[Help Fund Future Episodes!]()**
-
-Each episode will have an in-depth tutorial with live demo,
-all *dedicated to the public domain* with the [Unlicense](http://unlicense.org/) License.
-For every $100 donated, I will write and publish one new episode.
-All backers will get to be a part of the writing process, and be credited in each tutorial.
-At the end, I'll compile everything into a copyright-free ebook, for the world to read!
-
-And hey, who knows?
-
-Maybe this could be a new way to fund, create, and publish something, *all in the open*.
-
